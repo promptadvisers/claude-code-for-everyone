@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cedar Workshop — Practical workshops for team decisions</title>
+<meta name="description" content="Cedar Workshop helps teams make better decisions together. Compare a half-day or full-day workshop and prepare an enquiry.">
+<style>
+  :root {
+    --ivory: #FAF7F1;
+    --paper: #FFFFFF;
+    --forest: #284A3D;
+    --terracotta: #B75D40;      /* accents, borders, large shapes */
+    --terracotta-text: #8F452C; /* text-safe terracotta (AA on ivory) */
+    --charcoal: #2B2B2B;
+    --muted: #55534E;
+    --line: #DAD3C4;
+    --error: #A3281B;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0;
+    background: var(--ivory);
+    color: var(--charcoal);
+    font: 1.0625rem/1.65 system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  h1, h2, h3 { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; color: var(--forest); font-weight: 600; line-height: 1.15; margin: 0; }
+  a { color: var(--terracotta-text); }
+  :focus-visible { outline: 3px solid var(--forest); outline-offset: 3px; border-radius: 2px; }
+  .wrap { max-width: 62rem; margin: 0 auto; padding: 0 1.25rem; }
+  .skip { position: absolute; left: -999px; top: 0; background: var(--forest); color: #fff; padding: .6rem 1rem; z-index: 10; }
+  .skip:focus { left: 0; }
+
+  header.site { padding: 1.25rem 0; border-bottom: 1px solid var(--line); }
+  header.site .wrap { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .brand { font-family: Georgia, serif; font-size: 1.35rem; color: var(--forest); font-weight: 600; text-decoration: none; }
+  nav a { margin-left: 1.25rem; text-decoration: none; color: var(--charcoal); font-size: .98rem; }
+  nav a:hover { text-decoration: underline; }
+  nav a:first-child { margin-left: 0; }
+
+  .hero { padding: clamp(3rem, 9vw, 6.5rem) 0 clamp(2.5rem, 6vw, 4.5rem); }
+  .eyebrow { color: var(--terracotta-text); font-size: .85rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; margin: 0 0 1rem; }
+  .hero h1 { font-size: clamp(2.5rem, 8vw, 4.75rem); max-width: 14ch; letter-spacing: -.01em; }
+  .hero p.lead { font-size: clamp(1.15rem, 2.6vw, 1.4rem); max-width: 36rem; margin: 1.5rem 0 2rem; color: var(--charcoal); }
+  .btn {
+    display: inline-block; background: var(--terracotta-text); color: #fff; border: 2px solid var(--terracotta-text);
+    padding: .8rem 1.5rem; font: inherit; font-weight: 600; border-radius: 4px; text-decoration: none; cursor: pointer; min-height: 44px;
+  }
+  .btn:hover { background: var(--forest); border-color: var(--forest); }
+  .btn.secondary { background: transparent; color: var(--forest); border-color: var(--forest); }
+  .btn.secondary:hover { background: var(--forest); color: #fff; }
+
+  section { padding: clamp(2.5rem, 6vw, 4.5rem) 0; }
+  section + section { border-top: 1px solid var(--line); }
+  h2 { font-size: clamp(1.75rem, 4.5vw, 2.5rem); margin-bottom: .75rem; }
+  .intro { max-width: 38rem; color: var(--muted); margin: 0 0 2rem; }
+
+  /* Comparison */
+  .compare { width: 100%; border-collapse: collapse; background: var(--paper); border: 1px solid var(--line); }
+  .compare caption { text-align: left; padding: 0 0 .75rem; color: var(--muted); font-size: .95rem; caption-side: bottom; padding-top: .75rem; }
+  .compare th, .compare td { text-align: left; vertical-align: top; padding: 1rem 1.25rem; border-bottom: 1px solid var(--line); }
+  .compare thead th { font-family: Georgia, serif; font-size: 1.5rem; color: var(--forest); border-bottom: 3px solid var(--terracotta); font-weight: 600; }
+  .compare tbody th { font-weight: 600; color: var(--muted); width: 22%; font-size: .95rem; }
+  .compare tr:last-child th, .compare tr:last-child td { border-bottom: 0; }
+  .price { font-family: Georgia, serif; font-size: 2rem; color: var(--forest); line-height: 1.1; }
+  .price small { font-family: system-ui, sans-serif; font-size: .85rem; color: var(--muted); display: block; margin-top: .25rem; }
+  .notes { margin: 1.25rem 0 0; color: var(--muted); font-size: .98rem; }
+  .notes li { margin-bottom: .25rem; }
+
+  .choose { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; }
+  .choose h3 { font-size: 1.2rem; margin-bottom: .35rem; }
+  .choose p { margin: 0; }
+
+  /* FAQ */
+  .faq { max-width: 42rem; }
+  .faq details { border-top: 1px solid var(--line); padding: .25rem 0; }
+  .faq details:last-child { border-bottom: 1px solid var(--line); }
+  .faq summary { cursor: pointer; padding: .85rem 0; font-weight: 600; color: var(--forest); min-height: 44px; }
+  .faq details p { margin: 0 0 1rem; }
+
+  /* Form */
+  form { max-width: 42rem; background: var(--paper); border: 1px solid var(--line); padding: clamp(1.25rem, 4vw, 2.25rem); }
+  .field { margin-bottom: 1.4rem; }
+  label, legend { display: block; font-weight: 600; margin-bottom: .35rem; color: var(--forest); padding: 0; }
+  .req { color: var(--terracotta-text); font-weight: 600; }
+  .hint { display: block; font-weight: 400; color: var(--muted); font-size: .92rem; margin-bottom: .35rem; }
+  input[type=text], input[type=email], input[type=number], textarea {
+    width: 100%; font: inherit; color: var(--charcoal); background: #fff;
+    border: 1.5px solid #7B776D; border-radius: 4px; padding: .65rem .75rem; min-height: 44px;
+  }
+  textarea { min-height: 7rem; resize: vertical; }
+  fieldset { border: 0; padding: 0; margin: 0 0 1.4rem; }
+  .choice { display: flex; gap: .65rem; align-items: flex-start; padding: .4rem 0; min-height: 44px; }
+  .choice input { margin: .35rem 0 0; width: 1.15rem; height: 1.15rem; accent-color: var(--forest); flex: none; }
+  .choice label { font-weight: 400; color: var(--charcoal); margin: 0; }
+  .invalid input[type=text], .invalid input[type=email], .invalid input[type=number], .invalid textarea { border-color: var(--error); border-width: 2px; }
+  .err { color: var(--error); font-size: .95rem; font-weight: 600; margin: .35rem 0 0; display: none; }
+  .invalid .err { display: block; }
+  .summary { border: 2px solid var(--error); background: #FFF4F1; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: none; }
+  .summary.show { display: block; }
+  .summary h3 { font-size: 1.1rem; color: var(--error); margin-bottom: .4rem; }
+  .summary ul { margin: 0; padding-left: 1.2rem; }
+  .success { border: 2px solid var(--forest); background: #EEF4F0; padding: 1rem 1.25rem; margin-top: 1.5rem; display: none; }
+  .success.show { display: block; }
+  .success p { margin: .25rem 0; }
+  .privacy { font-size: .95rem; color: var(--muted); margin: 1rem 0 0; }
+
+  footer { border-top: 1px solid var(--line); padding: 2rem 0 3rem; color: var(--muted); font-size: .92rem; }
+  footer p { margin: 0 0 .4rem; max-width: 44rem; }
+
+  /* Phone layout: comparison becomes two stacked packages */
+  @media (max-width: 40rem) {
+    nav a { margin-left: .9rem; }
+    .compare, .compare tbody, .compare tr, .compare th, .compare td { display: block; width: 100%; }
+    .compare thead, .compare caption { position: absolute; left: -9999px; }
+    .compare { border: 0; background: transparent; }
+    .compare tbody tr { display: none; }
+    .compare tbody { display: block; }
+    .pkg { background: var(--paper); border: 1px solid var(--line); border-top: 4px solid var(--terracotta); padding: 1.25rem; margin-bottom: 1rem; }
+    .choose { grid-template-columns: 1fr; gap: 1.25rem; }
+    .btn { width: 100%; text-align: center; }
+  }
+  @media (min-width: 40.01rem) { .pkgs { display: none; } }
+  .pkg h3 { font-size: 1.6rem; margin-bottom: .75rem; }
+  .pkg dl { margin: 0; }
+  .pkg dt { font-size: .85rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: .85rem; }
+  .pkg dd { margin: .1rem 0 0; }
+  .pkg .btn { margin-top: 1.25rem; }
+  /* Scannable comparison */
+  .compare thead th { vertical-align: bottom; padding-top: 1.25rem; }
+  .compare thead th .opt-name { display: block; font-size: 1.5rem; }
+  .compare thead th .price { display: block; font-size: 2.6rem; margin-top: .35rem; color: var(--terracotta-text); }
+  .price-note { display: block; font-family: system-ui, sans-serif; font-size: .85rem; font-weight: 400; color: var(--muted); }
+  .compare td.big { font-size: 1.25rem; font-weight: 600; color: var(--charcoal); }
+  .compare tbody tr:nth-child(even) th, .compare tbody tr:nth-child(even) td { background: #FBF9F4; }
+  .out { list-style: none; margin: 0; padding: 0; }
+  .out li { padding-left: 1.6rem; position: relative; margin-bottom: .35rem; }
+  .out li::before { content: "\2713"; position: absolute; left: 0; color: var(--forest); font-weight: 700; }
+  .out li.extra { font-weight: 600; }
+  .out li.extra::before { content: "+"; color: var(--terracotta-text); font-size: 1.2rem; line-height: 1.35; }
+  .legend { font-size: .92rem; color: var(--muted); margin: .75rem 0 0; }
+  .legend .mark { color: var(--terracotta-text); font-weight: 700; }
+  .cta-row td, .cta-row th { background: transparent !important; }
+  .pkg .price { font-size: 2.4rem; color: var(--terracotta-text); margin: 0 0 .25rem; }
+  .pkg .price .price-note { display: block; }
+  .pkg .facts { font-size: 1.15rem; margin: 0 0 .85rem; }
+  .pkg .leave { font-size: .85rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 0 0 .4rem; }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="#top">Cedar Workshop</a>
+    <nav aria-label="Main">
+      <a href="#options">Options</a>
+      <a href="#faq">FAQ</a>
+      <a href="#enquiry">Enquire</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="hero" id="top">
+    <div class="wrap">
+      <p class="eyebrow">Workshops for team leads</p>
+      <h1>Better decisions, made together.</h1>
+      <p class="lead">Cedar Workshop helps teams make better decisions together. Choose a half-day or full-day format, then prepare an enquiry to bring to us.</p>
+      <a class="btn" href="#options">Compare the two options</a>
+    </div>
+  </div>
+
+  <section id="options" aria-labelledby="options-h">
+    <div class="wrap">
+      <h2 id="options-h">Two ways to work</h2>
+      <p class="intro">Both formats run remotely or in person. The difference is how far your team gets: a clear problem and next steps, or tested options and an experiment you choose.</p>
+
+      <table class="compare">
+        <caption>Prices are fictional CAD amounts, before applicable taxes. Travel is quoted separately.</caption>
+        <thead>
+          <tr>
+            <td><span class="sr-only" style="position:absolute;left:-9999px">Detail</span></td>
+            <th scope="col">
+              <span class="opt-name">Half-day</span>
+              <span class="price">$1,800</span>
+              <span class="price-note">CAD, before applicable taxes</span>
+            </th>
+            <th scope="col">
+              <span class="opt-name">Full-day</span>
+              <span class="price">$3,200</span>
+              <span class="price-note">CAD, before applicable taxes</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Length</th><td class="big">3 hours</td><td class="big">6 hours</td></tr>
+          <tr><th scope="row">Group size</th><td class="big">Up to 12 people</td><td class="big">Up to 20 people</td></tr>
+          <tr><th scope="row">You leave with</th>
+            <td><ul class="out"><li>A shared problem definition</li><li>Prioritized next steps</li></ul></td>
+            <td><ul class="out"><li>A shared problem definition</li><li class="extra">Tested options</li><li class="extra">A 30-day experiment the team chooses</li></ul></td></tr>
+          <tr class="cta-row"><th scope="row"><span class="sr-only" style="position:absolute;left:-9999px">Next step</span></th>
+            <td><a class="btn secondary" href="#enquiry" data-pick="half-day">Enquire about the half-day</a></td>
+            <td><a class="btn secondary" href="#enquiry" data-pick="full-day">Enquire about the full-day</a></td></tr>
+        </tbody>
+      </table>
+
+      <!-- Phone version of the same facts -->
+      <div class="pkgs" aria-label="Workshop options">
+        <article class="pkg">
+          <h3>Half-day</h3>
+          <p class="price">$1,800 <span class="price-note">CAD, before applicable taxes</span></p>
+          <p class="facts"><strong>3 hours</strong> · <strong>up to 12 people</strong></p>
+          <p class="leave">You leave with:</p>
+          <ul class="out"><li>A shared problem definition</li><li>Prioritized next steps</li></ul>
+          <a class="btn secondary" href="#enquiry" data-pick="half-day">Enquire about the half-day</a>
+        </article>
+        <article class="pkg">
+          <h3>Full-day</h3>
+          <p class="price">$3,200 <span class="price-note">CAD, before applicable taxes</span></p>
+          <p class="facts"><strong>6 hours</strong> · <strong>up to 20 people</strong></p>
+          <p class="leave">You leave with:</p>
+          <ul class="out"><li>A shared problem definition</li><li class="extra">Tested options</li><li class="extra">A 30-day experiment the team chooses</li></ul>
+          <a class="btn secondary" href="#enquiry" data-pick="full-day">Enquire about the full-day</a>
+        </article>
+      </div>
+      <p class="legend"><span class="mark" aria-hidden="true">+</span> Items marked with a plus are in the full-day only.</p>
+
+      <ul class="notes">
+        <li>Prices are fictional CAD amounts, before applicable taxes.</li>
+        <li>Travel is quoted separately.</li>
+        <li>There is no online payment. An enquiry is not a booking.</li>
+      </ul>
+
+      <div class="choose">
+        <div>
+          <h3>Choose the half-day if…</h3>
+          <p>Your group is 12 or fewer and you need everyone aligned on the problem and a prioritized list of what to do next.</p>
+        </div>
+        <div>
+          <h3>Choose the full-day if…</h3>
+          <p>You have up to 20 people and want to test options and leave with a 30-day experiment the team has chosen.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" aria-labelledby="faq-h">
+    <div class="wrap">
+      <h2 id="faq-h">Before you enquire</h2>
+      <div class="faq">
+        <details>
+          <summary>Do we need to prepare?</summary>
+          <p>Bring one real team challenge and invite people who can act on the decision.</p>
+        </details>
+        <details>
+          <summary>Can we join remotely?</summary>
+          <p>Yes. Both formats can run remotely or in person.</p>
+        </details>
+        <details>
+          <summary>What accessibility support is available?</summary>
+          <p>Tell us what would help when you enquire. We can provide captions, breaks and accessible digital materials.</p>
+        </details>
+        <details>
+          <summary>Does the form book a workshop?</summary>
+          <p>No. It prepares a downloadable enquiry on your device. It does not send an email or confirm a booking.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section id="enquiry" aria-labelledby="enq-h">
+    <div class="wrap">
+      <h2 id="enq-h">Prepare your enquiry</h2>
+      <p class="intro">Fill in the details below and download your enquiry as a file. This form does not book a workshop and does not send anything: the file is created on your device only.</p>
+
+      <form id="enq-form" novalidate>
+        <div class="summary" id="summary" role="alert" tabindex="-1">
+          <h3>Please fix the following</h3>
+          <ul id="summary-list"></ul>
+        </div>
+
+        <p class="hint" style="margin-top:0"><span class="req" aria-hidden="true">*</span> Required field</p>
+
+        <div class="field" data-field="name">
+          <label for="name">Your name <span class="req" aria-hidden="true">*</span><span class="sr-only" style="position:absolute;left:-9999px"> (required)</span></label>
+          <input type="text" id="name" name="name" autocomplete="name" required aria-describedby="name-err">
+          <p class="err" id="name-err">Enter your name.</p>
+        </div>
+
+        <div class="field" data-field="email">
+          <label for="email">Email address <span class="req" aria-hidden="true">*</span><span class="sr-only" style="position:absolute;left:-9999px"> (required)</span></label>
+          <span class="hint" id="email-hint">Saved in your file so we know where to reply. Nothing is sent from this page.</span>
+          <input type="email" id="email" name="email" autocomplete="email" required aria-describedby="email-hint email-err">
+          <p class="err" id="email-err">Enter an email address like name@example.com.</p>
+        </div>
+
+        <div class="field" data-field="team">
+          <label for="team">Team or organization <span class="hint" style="display:inline">(optional)</span></label>
+          <input type="text" id="team" name="team" autocomplete="organization">
+        </div>
+
+        <div class="field" data-field="size">
+          <label for="size">How many people would attend? <span class="req" aria-hidden="true">*</span><span class="sr-only" style="position:absolute;left:-9999px"> (required)</span></label>
+          <span class="hint" id="size-hint">Half-day: up to 12. Full-day: up to 20.</span>
+          <input type="number" id="size" name="size" min="1" max="20" step="1" inputmode="numeric" required aria-describedby="size-hint size-err" style="max-width:10rem">
+          <p class="err" id="size-err">Enter a whole number of people.</p>
+        </div>
+
+        <fieldset data-field="format" aria-describedby="format-err">
+          <legend>Which workshop interests you? <span class="req" aria-hidden="true">*</span><span class="sr-only" style="position:absolute;left:-9999px"> (required)</span></legend>
+          <div class="choice"><input type="radio" id="f-half" name="format" value="half-day"><label for="f-half">Half-day: 3 hours, up to 12 people, $1,800</label></div>
+          <div class="choice"><input type="radio" id="f-full" name="format" value="full-day"><label for="f-full">Full-day: 6 hours, up to 20 people, $3,200</label></div>
+          <p class="err" id="format-err">Choose a workshop format.</p>
+        </fieldset>
+
+        <fieldset data-field="mode" aria-describedby="mode-err">
+          <legend>How would you like to meet? <span class="req" aria-hidden="true">*</span><span class="sr-only" style="position:absolute;left:-9999px"> (required)</span></legend>
+          <div class="choice"><input type="radio" id="m-remote" name="mode" value="remote"><label for="m-remote">Remotely</label></div>
+          <div class="choice"><input type="radio" id="m-person" name="mode" value="in person"><label for="m-person">In person (travel is quoted separately)</label></div>
+          <p class="err" id="mode-err">Choose remote or in person.</p>
+        </fieldset>
+
+        <div class="field" data-field="challenge">
+          <label for="challenge">The real team challenge you would bring <span class="req" aria-hidden="true">*</span><span class="sr-only" style="position:absolute;left:-9999px"> (required)</span></label>
+          <span class="hint" id="challenge-hint">One decision or problem is enough. Who needs to be in the room to act on it?</span>
+          <textarea id="challenge" name="challenge" required aria-describedby="challenge-hint challenge-err"></textarea>
+          <p class="err" id="challenge-err">Describe the challenge you would bring.</p>
+        </div>
+
+        <div class="field" data-field="access">
+          <label for="access">Accessibility support that would help <span class="hint" style="display:inline">(optional)</span></label>
+          <span class="hint" id="access-hint">For example captions, breaks or accessible digital materials.</span>
+          <textarea id="access" name="accessibility" aria-describedby="access-hint"></textarea>
+        </div>
+
+        <button type="submit" class="btn">Download my enquiry</button>
+        <p class="privacy">This creates a file named <code>cedar-workshop-enquiry.json</code> on your device. It does not send an email, take payment or confirm a booking.</p>
+
+        <div class="success" id="success" role="status" tabindex="-1" aria-live="polite">
+          <p><strong>Your enquiry file has been prepared.</strong></p>
+          <p>It was saved to your device only. Nothing has been sent and no booking has been made. Check your downloads folder for <code>cedar-workshop-enquiry.json</code>.</p>
+        </div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Cedar Workshop is a fictional example. Prices are fictional CAD amounts, before applicable taxes. Travel is quoted separately.</p>
+    <p>Submitting the enquiry form downloads a file to your device. It does not send an email, take payment or confirm a booking.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var form = document.getElementById('enq-form');
+  var summary = document.getElementById('summary');
+  var list = document.getElementById('summary-list');
+  var success = document.getElementById('success');
+  var CAPACITY = { 'half-day': 12, 'full-day': 20 };
+  var LABELS = { 'half-day': 'Half-day workshop ($1,800 CAD, 3 hours, up to 12 people)',
+                 'full-day': 'Full-day workshop ($3,200 CAD, 6 hours, up to 20 people)' };
+
+  function val(id) { return document.getElementById(id).value.trim(); }
+  function radio(name) { var r = form.querySelector('input[name="' + name + '"]:checked'); return r ? r.value : ''; }
+
+  // Phone "Enquire about..." buttons preselect the format
+  Array.prototype.forEach.call(document.querySelectorAll('[data-pick]'), function (a) {
+    a.addEventListener('click', function () {
+      document.getElementById(a.getAttribute('data-pick') === 'half-day' ? 'f-half' : 'f-full').checked = true;
+    });
+  });
+
+  function setError(key, message, errors) {
+    var wrap = form.querySelector('[data-field="' + key + '"]');
+    wrap.classList.add('invalid');
+    var p = wrap.querySelector('.err');
+    if (message) p.textContent = message;
+    var target = wrap.querySelector('input, textarea');
+    var link = target.id;
+    errors.push({ id: link, text: p.textContent });
+    var ctl = wrap.querySelector('input[type=text],input[type=email],input[type=number],textarea');
+    if (ctl) ctl.setAttribute('aria-invalid', 'true');
+  }
+
+  function clearErrors() {
+    Array.prototype.forEach.call(form.querySelectorAll('.invalid'), function (n) { n.classList.remove('invalid'); });
+    Array.prototype.forEach.call(form.querySelectorAll('[aria-invalid]'), function (n) { n.removeAttribute('aria-invalid'); });
+    summary.classList.remove('show');
+    list.innerHTML = '';
+  }
+
+  function validate() {
+    var errors = [];
+    if (!val('name')) setError('name', null, errors);
+    var email = val('email');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) setError('email', null, errors);
+
+    var format = radio('format');
+    var sizeRaw = val('size');
+    var size = Number(sizeRaw);
+    if (!sizeRaw || !Number.isInteger(size) || size < 1) {
+      setError('size', 'Enter a whole number of people, 1 or more.', errors);
+    } else if (format && size > CAPACITY[format]) {
+      setError('size', 'The ' + format + ' workshop holds up to ' + CAPACITY[format] + ' people. Choose the full-day format or a smaller group.', errors);
+    } else if (size > 20) {
+      setError('size', 'Our largest workshop holds up to 20 people.', errors);
+    }
+    if (!format) { form.querySelector('[data-field="format"]').classList.add('invalid'); errors.push({ id: 'f-half', text: 'Choose a workshop format.' }); }
+    if (!radio('mode')) { form.querySelector('[data-field="mode"]').classList.add('invalid'); errors.push({ id: 'm-remote', text: 'Choose remote or in person.' }); }
+    if (!val('challenge')) setError('challenge', null, errors);
+    return errors;
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    success.classList.remove('show');
+    clearErrors();
+    var errors = validate();
+    if (errors.length) {
+      errors.forEach(function (er) {
+        var li = document.createElement('li');
+        var a = document.createElement('a');
+        a.href = '#' + er.id;
+        a.textContent = er.text;
+        a.addEventListener('click', function (ev) { ev.preventDefault(); document.getElementById(er.id).focus(); });
+        li.appendChild(a);
+        list.appendChild(li);
+      });
+      summary.classList.add('show');
+      summary.focus();
+      return;
+    }
+
+    var format = radio('format');
+    var data = {
+      type: 'Cedar Workshop enquiry (prepared on this device; not sent)',
+      status: 'Not submitted. This is an enquiry only, not a booking.',
+      preparedAt: new Date().toISOString(),
+      contact: { name: val('name'), email: val('email'), teamOrOrganization: val('team') || null },
+      attendees: Number(val('size')),
+      workshop: { format: format, description: LABELS[format], currency: 'CAD', pricesNote: 'Fictional CAD amounts, before applicable taxes. Travel quoted separately.' },
+      delivery: radio('mode'),
+      teamChallenge: val('challenge'),
+      accessibilityNeeds: val('access') || null
+    };
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'cedar-workshop-enquiry.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    success.classList.add('show');
+    success.focus();
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Approved order value by region — Fieldwork Services</title>
+<style>
+  :root {
+    --ivory: #faf5ea;
+    --card: #fffdf7;
+    --ink: #1f2a3c;
+    --muted: #5d6676;
+    --line: #ded5c0;
+    --terracotta: #b5573a;
+    --forest: #2f5d46;
+    --forest-soft: #dfeadf;
+    --terra-soft: #f3e1d8;
+    --grey-soft: #ebe6d8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 20px 56px;
+    background: var(--ivory); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.45;
+  }
+  main { max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 1.7rem; margin: 0 0 4px; }
+  h2 { font-size: 1.05rem; margin: 0 0 12px; }
+  .sub { color: var(--muted); margin: 0 0 24px; font-size: .92rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 18px 20px; margin-bottom: 18px; }
+  .filter-label { font-weight: 600; font-size: .9rem; margin-bottom: 8px; display: block; }
+  .seg { display: flex; flex-wrap: wrap; gap: 8px; }
+  .seg button {
+    font: inherit; font-weight: 600; padding: 8px 18px; cursor: pointer;
+    border: 2px solid var(--ink); background: var(--card); color: var(--ink); border-radius: 6px;
+  }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--ivory); }
+  button:focus-visible { outline: 3px solid var(--terracotta); outline-offset: 2px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
+  .kpi .label { color: var(--muted); font-size: .85rem; text-transform: uppercase; letter-spacing: .04em; }
+  .kpi .value { font-size: 2.2rem; font-weight: 700; margin-top: 2px; }
+  .kpi .value.green { color: var(--forest); }
+  .kpi .note { color: var(--muted); font-size: .85rem; }
+  svg { width: 100%; height: auto; display: block; }
+  .bar-label, .bar-value, .axis-text { fill: var(--ink); font-size: 13px; }
+  .bar-value { font-weight: 700; }
+  .axis-text { fill: var(--muted); font-size: 11px; }
+  .tablebar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .count { color: var(--muted); font-size: .9rem; }
+  #export {
+    font: inherit; font-weight: 600; padding: 8px 16px; cursor: pointer; border-radius: 6px;
+    border: 2px solid var(--forest); background: var(--forest); color: #fff;
+  }
+  #export:disabled { cursor: not-allowed; background: var(--grey-soft); border-color: var(--line); color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.not-counted td { color: var(--muted); }
+  tr.not-counted td.val { text-decoration: line-through; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700; }
+  .badge.approved { background: var(--forest-soft); color: var(--forest); }
+  .badge.cancelled { background: var(--terra-soft); color: var(--terracotta); }
+  .badge.draft { background: var(--grey-soft); color: var(--muted); }
+  .badge.other { background: var(--grey-soft); color: var(--ink); }
+  .empty { text-align: center; padding: 36px 12px; color: var(--muted); }
+  .empty strong { display: block; color: var(--ink); font-size: 1.1rem; margin-bottom: 4px; }
+  .foot { color: var(--muted); font-size: .82rem; margin-top: 8px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Approved order value by region</h1>
+  <p class="sub">Fieldwork Services · fictional data · CAD · as of June 30, 2026 · static snapshot, not live and not a forecast</p>
+
+  <section class="card" aria-label="Region filter">
+    <span class="filter-label" id="filter-label">Region</span>
+    <div class="seg" id="filter" role="group" aria-labelledby="filter-label"></div>
+  </section>
+
+  <section class="card kpis" aria-live="polite">
+    <div class="kpi">
+      <div class="label">Approved order value</div>
+      <div class="value green" id="kpi-value"></div>
+      <div class="note" id="kpi-scope"></div>
+    </div>
+    <div class="kpi">
+      <div class="label">Approved order count</div>
+      <div class="value" id="kpi-count"></div>
+      <div class="note" id="kpi-count-note"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Approved value by region (CAD)</h2>
+    <div id="chart"></div>
+  </section>
+
+  <section class="card">
+    <div class="tablebar">
+      <div>
+        <h2 style="margin:0">Order rows</h2>
+        <div class="count" id="rowcount"></div>
+      </div>
+      <button id="export" type="button">Export visible rows (CSV)</button>
+    </div>
+    <div id="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Order</th><th>Region</th><th class="num">Qty</th><th class="num">Unit price</th>
+            <th class="num">Line value</th><th>Status</th><th>Counted?</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="empty" hidden role="status">
+      <strong id="empty-title"></strong>
+      <span>There are no order rows for this region, so the total is 0 and there is nothing to export.</span>
+    </div>
+    <p class="foot">Line value = quantity × unit price. Approved value and count include approved rows only; cancelled and draft rows are shown for context and never counted. The export contains exactly the rows shown in this table.</p>
+  </section>
+</main>
+
+<script id="source-csv" type="text/plain">id,region,quantity,unit_price,status
+SO-101,North,10,100,approved
+SO-102,South,8,125,approved
+SO-103,North,6,100,cancelled
+SO-104,East,5,200,approved
+SO-105,South,4,125,draft
+SO-106,East,3,200,approved
+SO-107,North,7,100,approved
+SO-108,South,2,125,cancelled
+</script>
+
+<script id="core">
+// ---- Pure logic (no DOM) ----
+var REGIONS = ['All', 'North', 'South', 'East', 'West'];
+var DATA_REGIONS = ['North', 'South', 'East', 'West'];
+
+function parseCSV(text) {
+  var lines = text.replace(/\r/g, '').split('\n').filter(function (l) { return l.length > 0; });
+  var head = lines[0].split(',');
+  return lines.slice(1).map(function (line) {
+    var c = line.split(','), o = {};
+    head.forEach(function (h, i) { o[h] = c[i]; });
+    o.quantity = Number(o.quantity);
+    o.unit_price = Number(o.unit_price);
+    return o;
+  });
+}
+function lineValue(r) { return r.quantity * r.unit_price; }
+function isApproved(r) { return r.status === 'approved'; }
+function visibleRows(rows, region) {
+  return region === 'All' ? rows.slice() : rows.filter(function (r) { return r.region === region; });
+}
+function approvedTotals(rows) {
+  var a = rows.filter(isApproved);
+  return { value: rows.reduce(function (s, r) { return s + lineValue(r); }, 0), count: a.length };
+}
+function fmt(n) {
+  var s = Number.isInteger(n) ? String(n) : n.toFixed(2);
+  return s.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+function csvCell(v) {
+  var s = String(v);
+  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function exportCSV(rows) {
+  var out = [['id', 'region', 'quantity', 'unit_price', 'status', 'line_value'].join(',')];
+  rows.forEach(function (r) {
+    out.push([r.id, r.region, r.quantity, r.unit_price, r.status, lineValue(r)].map(csvCell).join(','));
+  });
+  return out.join('\r\n') + '\r\n';
+}
+function buildView(allRows, region) {
+  var vis = visibleRows(allRows, region);
+  var t = approvedTotals(vis);
+  var bars = DATA_REGIONS.map(function (reg) {
+    var rt = approvedTotals(allRows.filter(function (r) { return r.region === reg; }));
+    return { region: reg, value: rt.value, count: rt.count, selected: region === 'All' || region === reg };
+  });
+  return {
+    region: region, rows: vis, total: t, bars: bars, empty: vis.length === 0,
+    csv: vis.length ? exportCSV(vis) : null,
+    filename: 'approved-orders-' + region.toLowerCase() + '.csv'
+  };
+}
+</script>
+
+<script id="ui">
+// ---- Rendering ----
+(function () {
+  var rows = parseCSV(document.getElementById('source-csv').textContent);
+  var current = 'All';
+  var $ = function (id) { return document.getElementById(id); };
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function renderFilter() {
+    $('filter').innerHTML = REGIONS.map(function (r) {
+      return '<button type="button" data-region="' + r + '" aria-pressed="' + (r === current) + '">' + r + '</button>';
+    }).join('');
+  }
+
+  function renderChart(v) {
+    var W = 640, H = 240, left = 60, right = 20, top = 28, bottom = 36;
+    var max = Math.max.apply(null, v.bars.map(function (b) { return b.value; }).concat([1]));
+    var plotH = H - top - bottom, plotW = W - left - right;
+    var slot = plotW / v.bars.length, bw = Math.min(80, slot * 0.6);
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Bar chart of approved order value in CAD by region">';
+    [0, 0.5, 1].forEach(function (f) {
+      var y = top + plotH - f * plotH;
+      s += '<line x1="' + left + '" x2="' + (W - right) + '" y1="' + y + '" y2="' + y + '" stroke="#ded5c0"/>';
+      s += '<text class="axis-text" x="' + (left - 8) + '" y="' + (y + 4) + '" text-anchor="end">' + fmt(Math.round(max * f)) + '</text>';
+    });
+    v.bars.forEach(function (b, i) {
+      var h = (b.value / max) * plotH, x = left + i * slot + (slot - bw) / 2, y = top + plotH - h;
+      var fill = b.selected ? '#2f5d46' : '#d8cdb4';
+      if (b.selected && v.region !== 'All') fill = '#b5573a';
+      s += '<rect data-bar="' + b.region + '" x="' + x + '" y="' + y + '" width="' + bw + '" height="' + h + '" fill="' + fill + '"/>';
+      s += '<text class="bar-value" x="' + (x + bw / 2) + '" y="' + (y - 6) + '" text-anchor="middle">' + fmt(b.value) + '</text>';
+      s += '<text class="bar-label" x="' + (x + bw / 2) + '" y="' + (H - 12) + '" text-anchor="middle">' + b.region + '</text>';
+    });
+    $('chart').innerHTML = s + '</svg>';
+  }
+
+  function render() {
+    var v = buildView(rows, current);
+    renderFilter();
+    $('kpi-value').textContent = 'CAD ' + fmt(v.total.value);
+    $('kpi-count').textContent = String(v.total.count);
+    var scope = current === 'All' ? 'all regions' : current;
+    var notCounted = v.rows.length - v.total.count;
+    $('kpi-scope').textContent = 'Sum of quantity × unit price for the approved orders in ' + scope + '.';
+    $('kpi-count-note').textContent = v.rows.length === 0
+      ? 'No order rows in ' + scope + '.'
+      : 'Orders with status exactly “approved” in ' + scope + '. Excludes ' + notCounted +
+        ' cancelled/draft row' + (notCounted === 1 ? '' : 's') + '.';
+    renderChart(v);
+
+    var approvedShown = v.total.count;
+    $('rowcount').textContent = v.rows.length === 0
+      ? 'Showing 0 rows'
+      : 'Showing ' + v.rows.length + ' row' + (v.rows.length === 1 ? '' : 's') + ' (' + approvedShown + ' approved, ' + (v.rows.length - approvedShown) + ' not counted)';
+
+    $('rows').innerHTML = v.rows.map(function (r) {
+      var ok = isApproved(r);
+      var cls = r.status === 'approved' || r.status === 'cancelled' || r.status === 'draft' ? r.status : 'other';
+      return '<tr class="' + (ok ? '' : 'not-counted') + '">' +
+        '<td>' + esc(r.id) + '</td><td>' + esc(r.region) + '</td>' +
+        '<td class="num">' + fmt(r.quantity) + '</td><td class="num">' + fmt(r.unit_price) + '</td>' +
+        '<td class="num val">' + fmt(lineValue(r)) + '</td>' +
+        '<td><span class="badge ' + cls + '">' + esc(r.status) + '</span></td>' +
+        '<td>' + (ok ? 'Counted' : 'Not counted') + '</td></tr>';
+    }).join('');
+
+    $('table-wrap').hidden = v.empty;
+    $('empty').hidden = !v.empty;
+    $('empty-title').textContent = 'No orders in ' + current;
+    $('export').disabled = v.empty;
+  }
+
+  $('filter').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-region]');
+    if (!b) return;
+    current = b.getAttribute('data-region');
+    render();
+  });
+
+  $('export').addEventListener('click', function () {
+    var v = buildView(rows, current);
+    if (!v.csv) return;
+    var blob = new Blob([v.csv], { type: 'text/csv;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = v.filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

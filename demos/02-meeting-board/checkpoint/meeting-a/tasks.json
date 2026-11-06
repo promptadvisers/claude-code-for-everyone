@@ -1,0 +1,76 @@
+{
+  "meeting": {
+    "id": "A",
+    "title": "Northstar Studio meeting A",
+    "date": "2026-06-08",
+    "source_file": "source-meeting-a.md",
+    "paragraphs": [
+      {"id": "P1", "speaker": "Priya", "text": "We have agreed four follow-up actions today. A campaign proposal is still only an idea."},
+      {"id": "P2", "speaker": "Owen", "text": "I will test the customer import by June 11, 2026."},
+      {"id": "P3", "speaker": "Maya", "text": "I will deliver the first draft on June 10, 2026."},
+      {"id": "P4", "speaker": "Priya", "text": "I will confirm the workshop budget by June 9, 2026."},
+      {"id": "P5", "speaker": "Maya", "text": "We could launch a campaign next month, but no decision or assignment is agreed today."},
+      {"id": "P6", "speaker": "Owen", "text": "The import test will use fictional customer records only."},
+      {"id": "P7", "speaker": "Priya", "text": "We agree to update the onboarding guide. We have not assigned an owner or a due date."},
+      {"id": "P8", "speaker": "Maya", "text": "My earlier draft deadline needs correcting."},
+      {"id": "P9", "speaker": "Maya", "text": "Make that June 12, 2026, not June 10, 2026."}
+    ]
+  },
+  "tasks": [
+    {
+      "id": "A-T01",
+      "action": "Test the customer import (fictional customer records only)",
+      "owner": "Owen",
+      "due_date": "2026-06-11",
+      "status": "open",
+      "source_refs": ["P2", "P6"],
+      "field_sources": {"action": ["P2", "P6"], "owner": ["P2"], "due_date": ["P2"]},
+      "corrections": []
+    },
+    {
+      "id": "A-T02",
+      "action": "Deliver the first draft",
+      "owner": "Maya",
+      "due_date": "2026-06-12",
+      "status": "open",
+      "source_refs": ["P3", "P8", "P9"],
+      "field_sources": {"action": ["P3"], "owner": ["P3"], "due_date": ["P9"]},
+      "corrections": ["A-C1"]
+    },
+    {
+      "id": "A-T03",
+      "action": "Confirm the workshop budget",
+      "owner": "Priya",
+      "due_date": "2026-06-09",
+      "status": "open",
+      "source_refs": ["P4"],
+      "field_sources": {"action": ["P4"], "owner": ["P4"], "due_date": ["P4"]},
+      "corrections": []
+    },
+    {
+      "id": "A-T04",
+      "action": "Update the onboarding guide",
+      "owner": null,
+      "due_date": null,
+      "status": "open",
+      "source_refs": ["P7"],
+      "field_sources": {"action": ["P7"], "owner": [], "due_date": []},
+      "corrections": []
+    }
+  ],
+  "proposals": [
+    {
+      "id": "A-PR1",
+      "idea": "Launch a campaign next month",
+      "owner": null,
+      "due_date": null,
+      "status": "proposal - not agreed",
+      "source_refs": ["P1", "P5"]
+    }
+  ],
+  "open_questions": [
+    {"id": "A-Q1", "task": "A-T04", "question": "Who owns updating the onboarding guide?", "source_refs": ["P7"]},
+    {"id": "A-Q2", "task": "A-T04", "question": "What is the due date for updating the onboarding guide?", "source_refs": ["P7"]}
+  ],
+  "corrections_file": "corrections.json"
+}

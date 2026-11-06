@@ -1,0 +1,17 @@
+{
+  "meeting_id": "A",
+  "note": "Explicit corrections, saved separately from the original meeting text. Each updates only its target task field.",
+  "corrections": [
+    {
+      "id": "A-C1",
+      "target_task": "A-T02",
+      "field": "due_date",
+      "previous_value": "2026-06-10",
+      "previous_source": "P3",
+      "corrected_value": "2026-06-12",
+      "announced_in": "P8",
+      "stated_in": "P9",
+      "evidence": "[P9] Maya: Make that June 12, 2026, not June 10, 2026."
+    }
+  ]
+}

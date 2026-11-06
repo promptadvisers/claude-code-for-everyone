@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meeting A work board - Northstar Studio</title>
+<style>
+  :root { --ink:#1b1f24; --muted:#586069; --line:#d0d7de; --bg:#f6f8fa; --card:#fff; --accent:#0b5cad; --warn:#8a4b00; --warnbg:#fff4e0; --prop:#5b3d9a; --propbg:#f3eefc; --hit:#fff3b0; }
+  * { box-sizing:border-box; }
+  body { font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; color:var(--ink); background:var(--bg); margin:0; }
+  header, main { max-width:1100px; margin:0 auto; padding:0 20px; }
+  header { padding-top:24px; }
+  h1 { font-size:1.6rem; margin:0 0 4px; }
+  h2 { font-size:1.15rem; margin:0 0 10px; }
+  .sub { color:var(--muted); margin:0 0 16px; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:16px; margin:16px 0; }
+  .agreed { border-top:4px solid var(--accent); }
+  .proposals { border-top:4px solid var(--prop); background:var(--propbg); }
+  .questions { border-top:4px solid var(--warn); }
+  .changes { border-top:4px solid #1a7f37; }
+  .resolved { text-decoration:line-through; color:var(--muted); }
+  .tag.cl { background:#e3f6e8; color:#14532d; border-color:#9bd3ac; }
+  .unchanged { margin:8px 0 0; }
+  .src-clar { border-left:4px solid #1a7f37; background:#eafaf0; padding:6px 12px; margin:8px 0; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+  tr.sel td { background:#eaf3ff; }
+  .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+  button, select { font:inherit; padding:4px 10px; border:1px solid #8c959f; border-radius:6px; background:#fff; color:var(--ink); }
+  button { cursor:pointer; }
+  button:hover { background:#eef2f6; }
+  :focus-visible { outline:3px solid #f08c00; outline-offset:2px; }
+  .chip { display:inline-block; font:600 .8rem ui-monospace,Menlo,monospace; padding:1px 8px; margin:0 4px 4px 0; border-radius:999px; background:#e7f0fb; color:#08427f; border:1px solid #b6d3f2; cursor:pointer; }
+  .chip.prop { background:#e9e0fa; color:#3f2878; border-color:#c8b6ee; }
+  .tag { font-size:.75rem; font-weight:700; padding:1px 8px; border-radius:4px; background:var(--warnbg); color:var(--warn); border:1px solid #f0c987; }
+  .tag.prop { background:#e9e0fa; color:#3f2878; border-color:#c8b6ee; }
+  .note { font-size:.85rem; color:var(--muted); }
+  .trace-chain { list-style:none; margin:8px 0; padding:0; }
+  .trace-chain li { border-left:4px solid var(--line); padding:6px 12px; margin:0 0 8px; background:#fafbfc; }
+  .trace-chain li.final { border-left-color:#1a7f37; background:#eafaf0; }
+  .trace-chain li.corr { border-left-color:var(--warn); background:var(--warnbg); }
+  .trace-chain li.superseded .quote { text-decoration:line-through; }
+  .step { font-size:.75rem; font-weight:700; text-transform:uppercase; color:var(--muted); }
+  .result { border:2px solid #1a7f37; border-radius:6px; padding:8px 12px; background:#fff; }
+  .para { display:flex; gap:10px; padding:6px 8px; border-radius:4px; }
+  .para.hit { background:var(--hit); outline:1px solid #d4b800; }
+  .para .pid { font:700 .85rem ui-monospace,Menlo,monospace; min-width:2.2em; }
+  .para .who { font-weight:600; min-width:3.5em; }
+  .blank { color:var(--muted); }
+  .bar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .edited { font-size:.8rem; color:var(--warn); font-weight:600; }
+  @media (max-width:760px){ table, thead, tbody, tr, th, td { display:block; } thead { position:absolute; left:-9999px; } tr { border-bottom:2px solid var(--line); padding:6px 0; } td { border:0; padding:3px 4px; } td::before { content:attr(data-label) ": "; font-weight:700; color:var(--muted); } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Northstar Studio meeting A - work board</h1>
+  <p class="sub" id="meta"></p>
+  <p class="note">This page only displays data extracted from the meeting. Fictional case data. Owner and due date come from what was said in the meeting or from a saved clarification; blank means nobody stated it. The only thing you can change here is task status (saved in this browser only).</p>
+</header>
+<main>
+  <section class="agreed" aria-labelledby="h-agreed">
+    <div class="bar"><h2 id="h-agreed">Agreed work (<span id="count-agreed"></span>)</h2><button type="button" id="reset">Reset statuses</button><span id="edited" class="edited" role="status"></span></div>
+    <table>
+      <caption class="sr">Agreed tasks with owner, due date, status and source paragraphs</caption>
+      <thead><tr><th scope="col">ID</th><th scope="col">Task</th><th scope="col">Owner</th><th scope="col">Due</th><th scope="col">Status</th><th scope="col">Source</th><th scope="col">Trace</th></tr></thead>
+      <tbody id="tasks"></tbody>
+    </table>
+  </section>
+
+  <section class="questions" aria-labelledby="h-q">
+    <h2 id="h-q">Open questions (<span id="count-q"></span>)</h2>
+    <ul id="questions"></ul>
+  </section>
+
+  <section class="changes" aria-labelledby="h-chg">
+    <h2 id="h-chg">Clarifications and what changed (<span id="count-c"></span>)</h2>
+    <div id="changes"></div>
+  </section>
+
+  <section class="proposals" aria-labelledby="h-prop">
+    <h2 id="h-prop">Proposals - not agreed, not tasks (<span id="count-p"></span>)</h2>
+    <table>
+      <caption class="sr">Proposals that are not agreed work</caption>
+      <thead><tr><th scope="col">ID</th><th scope="col">Idea</th><th scope="col">Owner</th><th scope="col">Due</th><th scope="col">Standing</th><th scope="col">Source</th></tr></thead>
+      <tbody id="proposals"></tbody>
+    </table>
+  </section>
+
+  <section aria-labelledby="h-trace" id="trace-section">
+    <h2 id="h-trace">Trace: <span id="trace-title"></span></h2>
+    <div id="trace" aria-live="polite"></div>
+  </section>
+
+  <section aria-labelledby="h-orig">
+    <h2 id="h-orig">Original meeting (unchanged)</h2>
+    <p class="note">Full text from <code id="srcfile"></code>. Paragraphs cited by the selected task are highlighted.</p>
+    <div id="orig"></div>
+  </section>
+</main>
+
+<script id="board-data" type="application/json">{
+ "meeting": {
+  "id": "A",
+  "title": "Northstar Studio meeting A",
+  "date": "2026-06-08",
+  "source_file": "source-meeting-a.md",
+  "paragraphs": [
+   {
+    "id": "P1",
+    "speaker": "Priya",
+    "text": "We have agreed four follow-up actions today. A campaign proposal is still only an idea."
+   },
+   {
+    "id": "P2",
+    "speaker": "Owen",
+    "text": "I will test the customer import by June 11, 2026."
+   },
+   {
+    "id": "P3",
+    "speaker": "Maya",
+    "text": "I will deliver the first draft on June 10, 2026."
+   },
+   {
+    "id": "P4",
+    "speaker": "Priya",
+    "text": "I will confirm the workshop budget by June 9, 2026."
+   },
+   {
+    "id": "P5",
+    "speaker": "Maya",
+    "text": "We could launch a campaign next month, but no decision or assignment is agreed today."
+   },
+   {
+    "id": "P6",
+    "speaker": "Owen",
+    "text": "The import test will use fictional customer records only."
+   },
+   {
+    "id": "P7",
+    "speaker": "Priya",
+    "text": "We agree to update the onboarding guide. We have not assigned an owner or a due date."
+   },
+   {
+    "id": "P8",
+    "speaker": "Maya",
+    "text": "My earlier draft deadline needs correcting."
+   },
+   {
+    "id": "P9",
+    "speaker": "Maya",
+    "text": "Make that June 12, 2026, not June 10, 2026."
+   }
+  ]
+ },
+ "tasks": [
+  {
+   "id": "A-T01",
+   "action": "Test the customer import (fictional customer records only)",
+   "owner": "Owen",
+   "due_date": "2026-06-11",
+   "status": "open",
+   "source_refs": [
+    "P2",
+    "P6"
+   ],
+   "field_sources": {
+    "action": [
+     "P2",
+     "P6"
+    ],
+    "owner": [
+     "P2"
+    ],
+    "due_date": [
+     "P2"
+    ]
+   },
+   "corrections": [],
+   "clarifications": []
+  },
+  {
+   "id": "A-T02",
+   "action": "Deliver the first draft",
+   "owner": "Maya",
+   "due_date": "2026-06-12",
+   "status": "open",
+   "source_refs": [
+    "P3",
+    "P8",
+    "P9"
+   ],
+   "field_sources": {
+    "action": [
+     "P3"
+    ],
+    "owner": [
+     "P3"
+    ],
+    "due_date": [
+     "P9"
+    ]
+   },
+   "corrections": [
+    "A-C1"
+   ],
+   "clarifications": []
+  },
+  {
+   "id": "A-T03",
+   "action": "Confirm the workshop budget",
+   "owner": "Priya",
+   "due_date": "2026-06-09",
+   "status": "open",
+   "source_refs": [
+    "P4"
+   ],
+   "field_sources": {
+    "action": [
+     "P4"
+    ],
+    "owner": [
+     "P4"
+    ],
+    "due_date": [
+     "P4"
+    ]
+   },
+   "corrections": [],
+   "clarifications": []
+  },
+  {
+   "id": "A-T04",
+   "action": "Update the onboarding guide",
+   "owner": "Owen",
+   "due_date": "2026-06-15",
+   "status": "open",
+   "source_refs": [
+    "P7",
+    "A-CL1"
+   ],
+   "field_sources": {
+    "action": [
+     "P7"
+    ],
+    "owner": [
+     "A-CL1"
+    ],
+    "due_date": [
+     "A-CL1"
+    ]
+   },
+   "corrections": [],
+   "clarifications": [
+    "A-CL1"
+   ]
+  }
+ ],
+ "proposals": [
+  {
+   "id": "A-PR1",
+   "idea": "Launch a campaign next month",
+   "owner": null,
+   "due_date": null,
+   "status": "proposal - not agreed",
+   "source_refs": [
+    "P1",
+    "P5"
+   ]
+  }
+ ],
+ "open_questions": [
+  {
+   "id": "A-Q1",
+   "task": "A-T04",
+   "question": "Who owns updating the onboarding guide?",
+   "source_refs": [
+    "P7"
+   ],
+   "resolved_by": "A-CL1"
+  },
+  {
+   "id": "A-Q2",
+   "task": "A-T04",
+   "question": "What is the due date for updating the onboarding guide?",
+   "source_refs": [
+    "P7"
+   ],
+   "resolved_by": "A-CL1"
+  }
+ ],
+ "corrections_file": "corrections.json",
+ "clarifications": [
+  {
+   "id": "A-CL1",
+   "file": "clarifications/clarification-01.md",
+   "received": "2026-11-05",
+   "received_note": "Received after the meeting, in this working session; not a meeting paragraph.",
+   "text": "The onboarding guide now belongs to Owen and is due June 15, 2026.",
+   "applies_to": "A-T04",
+   "changes": [
+    {
+     "field": "owner",
+     "from": null,
+     "to": "Owen"
+    },
+    {
+     "field": "due_date",
+     "from": null,
+     "to": "2026-06-15"
+    }
+   ]
+  }
+ ]
+}</script>
+<script id="corr-data" type="application/json">{
+ "meeting_id": "A",
+ "note": "Explicit corrections, saved separately from the original meeting text. Each updates only its target task field.",
+ "corrections": [
+  {
+   "id": "A-C1",
+   "target_task": "A-T02",
+   "field": "due_date",
+   "previous_value": "2026-06-10",
+   "previous_source": "P3",
+   "corrected_value": "2026-06-12",
+   "announced_in": "P8",
+   "stated_in": "P9",
+   "evidence": "[P9] Maya: Make that June 12, 2026, not June 10, 2026."
+  }
+ ]
+}</script>
+<script>
+(function () {
+  var data = JSON.parse(document.getElementById('board-data').textContent);
+  var corrData = JSON.parse(document.getElementById('corr-data').textContent);
+  var KEY = 'northstar-meeting-' + data.meeting.id.toLowerCase() + '-board-status-v1';
+  var STATUSES = ['open', 'in progress', 'done'];
+  var paras = {}; data.meeting.paragraphs.forEach(function (p) { paras[p.id] = p; });
+  var corrs = {}; corrData.corrections.forEach(function (c) { corrs[c.id] = c; });
+  var clars = {}; (data.clarifications || []).forEach(function (c) { clars[c.id] = c; });
+  var selected = 'A-T04'; // default trace: the task updated by the latest clarification
+
+  function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
+  function save(o) { try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} }
+  var local = load();
+
+  function el(tag, attrs, kids) {
+    var n = document.createElement(tag);
+    Object.keys(attrs || {}).forEach(function (k) {
+      if (k === 'text') n.textContent = attrs[k]; else n.setAttribute(k, attrs[k]);
+    });
+    (kids || []).forEach(function (c) { n.appendChild(c); });
+    return n;
+  }
+  function fmt(iso) {
+    if (!iso) return null;
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+    var names = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    return names[+m[2] - 1] + ' ' + (+m[3]) + ', ' + m[1];
+  }
+  function blankCell(td, label) {
+    td.appendChild(el('span', { 'class': 'blank' }));
+    td.appendChild(el('span', { 'class': 'sr', text: label }));
+  }
+  function chips(refs, taskId, cls) {
+    var wrap = document.createElement('span');
+    refs.forEach(function (r) {
+      var b = el('button', { type: 'button', 'class': 'chip ' + (cls || ''), 'aria-label': (clars[r] ? 'Show clarification ' : 'Show paragraph ') + r, text: r });
+      b.addEventListener('click', function () { if (taskId) select(taskId); flash(r); });
+      wrap.appendChild(b);
+    });
+    return wrap;
+  }
+  function flash(pid) {
+    var n = document.getElementById((clars[pid] ? 'clar-' : 'para-') + pid);
+    if (n) { n.scrollIntoView({ block: 'center' }); n.focus(); }
+  }
+
+  function fromClar(t, field) {
+    var s = (t.field_sources && t.field_sources[field]) || [];
+    for (var i = 0; i < s.length; i++) if (clars[s[i]]) return s[i];
+    return null;
+  }
+
+  function renderTasks() {
+    var tb = document.getElementById('tasks'); tb.textContent = '';
+    data.tasks.forEach(function (t) {
+      var status = local[t.id] || t.status;
+      var tr = el('tr', { id: 'row-' + t.id });
+      if (t.id === selected) tr.className = 'sel';
+      tr.appendChild(el('td', { 'data-label': 'ID', text: t.id }));
+      tr.appendChild(el('td', { 'data-label': 'Task', text: t.action }));
+      var o = el('td', { 'data-label': 'Owner' });
+      if (t.owner) { o.textContent = t.owner; if (fromClar(t, 'owner')) o.appendChild(el('div', { 'class': 'tag cl', text: 'clarified ' + fromClar(t, 'owner') })); }
+      else blankCell(o, 'Owner not assigned');
+      tr.appendChild(o);
+      var d = el('td', { 'data-label': 'Due' });
+      if (t.due_date) {
+        d.textContent = fmt(t.due_date);
+        if (t.corrections.length) d.appendChild(el('div', { 'class': 'tag', text: 'corrected' }));
+        if (fromClar(t, 'due_date')) d.appendChild(el('div', { 'class': 'tag cl', text: 'clarified ' + fromClar(t, 'due_date') }));
+      } else blankCell(d, 'Due date not set');
+      tr.appendChild(d);
+      var s = el('td', { 'data-label': 'Status' });
+      var sel = el('select', { 'aria-label': 'Status for ' + t.id });
+      STATUSES.forEach(function (v) { var op = el('option', { value: v, text: v }); if (v === status) op.selected = true; sel.appendChild(op); });
+      sel.addEventListener('change', function () { local[t.id] = sel.value; save(local); updateEdited(); });
+      s.appendChild(sel); tr.appendChild(s);
+      var src = el('td', { 'data-label': 'Source' }); src.appendChild(chips(t.source_refs, t.id)); tr.appendChild(src);
+      var tc = el('td', { 'data-label': 'Trace' });
+      var tb2 = el('button', { type: 'button', text: 'Trace ' + t.id });
+      tb2.addEventListener('click', function () { select(t.id); document.getElementById('trace-section').scrollIntoView(); });
+      tc.appendChild(tb2); tr.appendChild(tc);
+      tb.appendChild(tr);
+    });
+    document.getElementById('count-agreed').textContent = data.tasks.length;
+  }
+
+  function renderQuestions() {
+    var ul = document.getElementById('questions'); ul.textContent = '';
+    data.open_questions.forEach(function (q) {
+      var kids = [el('span', { 'class': q.resolved_by ? 'resolved' : '', text: q.question + ' ' }), el('span', { 'class': 'note', text: '(' + q.task + ') ' }), chips(q.source_refs, q.task)];
+      if (q.resolved_by) { kids.push(el('span', { 'class': 'tag cl', text: 'Resolved by ' + q.resolved_by })); }
+      ul.appendChild(el('li', {}, kids));
+    });
+    var open = data.open_questions.filter(function (q) { return !q.resolved_by; }).length;
+    document.getElementById('count-q').textContent = open + ' open, ' + (data.open_questions.length - open) + ' resolved';
+  }
+
+  function renderProposals() {
+    var tb = document.getElementById('proposals'); tb.textContent = '';
+    data.proposals.forEach(function (p) {
+      var tr = el('tr');
+      tr.appendChild(el('td', { 'data-label': 'ID', text: p.id }));
+      tr.appendChild(el('td', { 'data-label': 'Idea', text: p.idea }));
+      var o = el('td', { 'data-label': 'Owner' }); blankCell(o, 'No owner - not agreed'); tr.appendChild(o);
+      var d = el('td', { 'data-label': 'Due' }); blankCell(d, 'No due date - not agreed'); tr.appendChild(d);
+      tr.appendChild(el('td', { 'data-label': 'Standing' }, [el('span', { 'class': 'tag prop', text: 'Proposal only' })]));
+      var s = el('td', { 'data-label': 'Source' }); s.appendChild(chips(p.source_refs, null, 'prop')); tr.appendChild(s);
+      tb.appendChild(tr);
+    });
+    document.getElementById('count-p').textContent = data.proposals.length;
+  }
+
+  function quoteLi(pid, step, cls) {
+    var p = paras[pid];
+    return el('li', { 'class': cls || '' }, [
+      el('div', { 'class': 'step', text: step + ' - ' + pid + ', ' + p.speaker }),
+      el('div', { 'class': 'quote', text: '"' + p.text + '"' })
+    ]);
+  }
+
+  function clarLi(c) {
+    return el('li', { 'class': 'final' }, [
+      el('div', { 'class': 'step', text: 'Clarification ' + c.id + ' - received after the meeting (not a meeting paragraph)' }),
+      el('div', { 'class': 'quote', text: '"' + c.text + '"' }),
+      el('div', { 'class': 'note', text: 'Saved separately in ' + c.file })
+    ]);
+  }
+
+  function renderTrace() {
+    var t = data.tasks.filter(function (x) { return x.id === selected; })[0];
+    document.getElementById('trace-title').textContent = t.id + ' - ' + t.action;
+    var box = document.getElementById('trace'); box.textContent = '';
+    var ol = el('ol', { 'class': 'trace-chain' });
+    var c = t.corrections.length ? corrs[t.corrections[0]] : null;
+    if (c) {
+      ol.appendChild(quoteLi(c.previous_source, 'Original statement', 'superseded'));
+      ol.appendChild(quoteLi(c.announced_in, 'Correction flagged', 'corr'));
+      ol.appendChild(quoteLi(c.stated_in, 'Final explicit correction', 'corr'));
+    } else {
+      t.source_refs.forEach(function (r, i) {
+        if (clars[r]) ol.appendChild(clarLi(clars[r])); else ol.appendChild(quoteLi(r, i === 0 ? 'Agreed in meeting' : 'Supporting detail'));
+      });
+    }
+    box.appendChild(ol);
+    var res = el('div', { 'class': 'result' });
+    res.appendChild(el('div', { 'class': 'step', text: 'Result on the board (' + t.id + ')' }));
+    res.appendChild(el('div', { text: 'Task: ' + t.action }));
+    res.appendChild(el('div', { text: 'Owner: ' + (t.owner || '(blank - not assigned)') + (fromClar(t, 'owner') ? ' (from ' + fromClar(t, 'owner') + ')' : '') }));
+    res.appendChild(el('div', { text: 'Due: ' + (fmt(t.due_date) || '(blank - not set)') + (fromClar(t, 'due_date') ? ' (from ' + fromClar(t, 'due_date') + ')' : '') }));
+    t.clarifications.forEach(function (cid) {
+      res.appendChild(el('div', { 'class': 'note', text: 'Owner and due date were blank after the meeting (P7: "We have not assigned an owner or a due date"). ' + cid + ' filled them in; P7 is unchanged in the meeting text below.' }));
+    });
+    if (c) res.appendChild(el('div', { 'class': 'note', text: 'Due date changed from ' + fmt(c.previous_value) + ' to ' + fmt(c.corrected_value) + ' by ' + c.id + ' (' + c.announced_in + ', ' + c.stated_in + '). The original line ' + c.previous_source + ' is kept in the meeting text below.' }));
+    if (!t.owner || !t.due_date) res.appendChild(el('div', { 'class': 'note', text: 'Blank fields were not stated in the meeting or a clarification; see Open questions.' }));
+    box.appendChild(res);
+    renderOrig();
+    renderTasks();
+  }
+
+  function renderOrig() {
+    var t = data.tasks.filter(function (x) { return x.id === selected; })[0];
+    var box = document.getElementById('orig'); box.textContent = '';
+    data.meeting.paragraphs.forEach(function (p) {
+      var d = el('div', { 'class': 'para' + (t.source_refs.indexOf(p.id) > -1 ? ' hit' : ''), id: 'para-' + p.id, tabindex: '-1' }, [
+        el('span', { 'class': 'pid', text: p.id }), el('span', { 'class': 'who', text: p.speaker + ':' }), el('span', { text: p.text })
+      ]);
+      if (t.source_refs.indexOf(p.id) > -1) d.appendChild(el('span', { 'class': 'sr', text: ' (cited by ' + t.id + ')' }));
+      box.appendChild(d);
+    });
+  }
+
+  function renderChanges() {
+    var box = document.getElementById('changes'); box.textContent = '';
+    var cl = data.clarifications || [];
+    cl.forEach(function (c) {
+      var t = data.tasks.filter(function (x) { return x.id === c.applies_to; })[0];
+      var wrap = el('div', { 'class': 'src-clar', id: 'clar-' + c.id, tabindex: '-1' });
+      wrap.appendChild(el('div', { 'class': 'step', text: c.id + ' - ' + c.file }));
+      wrap.appendChild(el('div', { text: '"' + c.text + '"' }));
+      wrap.appendChild(el('div', { 'class': 'note', text: c.received_note }));
+      box.appendChild(wrap);
+      var tbl = el('table');
+      tbl.appendChild(el('caption', { 'class': 'sr', text: 'Changes made by ' + c.id + ' to ' + c.applies_to }));
+      tbl.appendChild(el('thead', {}, [el('tr', {}, ['Task', 'Field', 'Before', 'After', 'Source'].map(function (h) { return el('th', { scope: 'col', text: h }); }))]));
+      var tb = el('tbody');
+      c.changes.forEach(function (ch) {
+        var f = ch.field === 'due_date' ? fmt : function (v) { return v; };
+        var before = ch.from == null ? '(blank)' : f(ch.from);
+        var after = ch.to == null ? '(blank)' : f(ch.to);
+        tb.appendChild(el('tr', {}, [
+          el('td', { 'data-label': 'Task', text: t.id + ' ' + t.action }),
+          el('td', { 'data-label': 'Field', text: ch.field === 'due_date' ? 'Due date' : 'Owner' }),
+          el('td', { 'data-label': 'Before', text: before }),
+          el('td', { 'data-label': 'After', text: after }),
+          el('td', { 'data-label': 'Source', text: c.id })
+        ]));
+      });
+      tbl.appendChild(tb); box.appendChild(tbl);
+      var others = data.tasks.filter(function (x) { return x.id !== c.applies_to; }).map(function (x) { return x.id; });
+      box.appendChild(el('p', { 'class': 'note unchanged', text: 'Not changed: ' + others.join(', ') + ', the proposal ' + data.proposals.map(function (p) { return p.id; }).join(', ') + ', and the original meeting text (P1-P9).' }));
+    });
+    document.getElementById('count-c').textContent = cl.length;
+  }
+
+  function select(id) { selected = id; renderTrace(); }
+  function updateEdited() { document.getElementById('edited').textContent = Object.keys(local).length ? 'Status edits saved in this browser.' : ''; }
+
+  document.getElementById('reset').addEventListener('click', function () { local = {}; save(local); renderTasks(); updateEdited(); });
+  document.getElementById('meta').textContent = data.meeting.title + ' - ' + fmt(data.meeting.date) + ' (fixed fictional date)';
+  document.getElementById('srcfile').textContent = data.meeting.source_file;
+  renderQuestions(); renderChanges(); renderProposals(); renderTrace(); updateEdited();
+})();
+</script>
+</body>
+</html>

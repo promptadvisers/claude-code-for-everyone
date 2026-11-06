@@ -1,0 +1,9 @@
+id,region,quantity,unit_price,status
+SO-101,North,10,100,approved
+SO-102,South,8,125,approved
+SO-103,North,6,100,cancelled
+SO-104,East,5,200,approved
+SO-105,South,4,125,draft
+SO-106,East,3,200,approved
+SO-107,North,7,100,approved
+SO-108,South,2,125,cancelled
